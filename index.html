@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#F2F2F7">
+  <title>OlaCodez Store</title>
+  <link rel="manifest" href="/manifest.json">
+  <link rel="icon" href="favicon.ico">
+  <!-- Using Tailwind CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <!-- Font Awesome for icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- React and related libraries -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+  <!-- Framer Motion -->
+  <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+  <style>
+    .liquid-glass {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    }
+    .dark .liquid-glass {
+      background: rgba(0, 0, 0, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .gradient-bg {
+      background: linear-gradient(135deg, #F2F2F7, #E5E5EA);
+    }
+    .dark .gradient-bg {
+      background: linear-gradient(135deg, #1C1C1E, #2C2C2E);
+    }
+    .app-icon {
+      width: 48px;
+      height: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 12px;
+      font-size: 24px;
+      color: white;
+    }
+    .settings-option {
+      padding: 12px 16px;
+      border-bottom: 1px solid rgba(0,0,0,0.1);
+    }
+    .dark .settings-option {
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+  </style>
+</head>
+<body class="gradient-bg min-h-screen font-sans transition-colors duration-300">
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect, useRef } = React;
+    const { motion, AnimatePresence } = Motion;
+
+    // Sample app data with proper icons
+    const sampleApps = [
+      {
+        id: '1',
+        name: 'Weather Pro',
+        description: 'Real-time weather updates with beautiful visuals',
+        category: 'Weather',
+        rating: 4.7,
+        developer: 'SkyView Inc.',
+        icon: 'fa-cloud-sun',
+        color: 'orange',
+        downloadUrl: 'https://example.com/download/weatherpro',
+      },
+      {
+        id: '2',
+        name: 'TaskMaster',
+        description: 'Organize your tasks and boost productivity',
+        category: 'Productivity',
+        rating: 4.5,
+        developer: 'Productivity Labs',
+        icon: 'fa-tasks',
+        color: 'blue',
+        downloadUrl: 'https://example.com/download/taskmaster',
+      },
+      {
+        id: '3',
+        name: 'Finance Tracker',
+        description: 'Manage your expenses and budget effectively',
+        category: 'Finance',
+        rating: 4.8,
+        developer: 'DevTreos team',
+        icon: 'fa-chart-line',
+        color: 'green',
+        downloadUrl: 'https://example.com/download/financetracker',
+      },
+      {
+        id: '4',
+        name: 'Photo Editor',
+        description: 'Professional photo editing tools',
+        category: 'Photo',
+        rating: 4.3,
+        developer: 'Creative Studio',
+        icon: 'fa-image',
+        color: 'purple',
+        downloadUrl: 'https://example.com/download/photoeditor',
+      },
+      {
+        id: '5',
+        name: 'Health Monitor',
+        description: 'Track your fitness and health metrics',
+        category: 'Health',
+        rating: 4.6,
+        developer: 'HealthTech',
+        icon: 'fa-heart-pulse',
+        color: 'red',
+        downloadUrl: 'https://example.com/download/healthmonitor',
+      }
+    ];
+
+    const AppItem = {
+      fromJson: (json) => ({
+        id: json.id || 'unknown',
+        name: json.name || 'Unknown App',
+        description: json.description || 'No description available',
+        category: json.category || 'Unknown',
+        rating: parseFloat(json.rating || 0.0),
+        developer: json.developer || 'Unknown Developer',
+        icon: json.icon || 'fa-question',
+        color: parseColor(json.color || 'grey'),
+        downloadUrl: json.downloadUrl || '#',
+      }),
+    };
+
+    const parseColor = (colorString) => {
+      const colors = {
+        orange: 'bg-orange-500',
+        blue: 'bg-blue-500',
+        green: 'bg-green-500',
+        purple: 'bg-purple-500',
+        teal: 'bg-teal-500',
+        red: 'bg-red-500',
+        indigo: 'bg-indigo-500',
+        amber: 'bg-amber-500',
+      };
+      return colors[colorString.toLowerCase()] || 'bg-gray-500';
+    };
+
+    const AppCard = ({ app }) => (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -20 }}
+        className="liquid-glass rounded-xl p-4 mb-4 flex items-center"
+      >
+        <div className={`app-icon ${app.color}`}>
+          <i className={`fas ${app.icon}`}></i>
+        </div>
+        <div className="ml-4 flex-1">
+          <h3 className="text-lg font-bold dark:text-white">{app.name}</h3>
+          <p className="text-sm dark:text-gray-300 line-clamp-2">{app.description}</p>
+          <div className="flex items-center mt-2 text-sm dark:text-gray-400">
+            {app.developer === 'DevTreos team' && (
+              <>
+                <span className="text-blue-500 mr-1"><i className="fas fa-check-circle"></i></span>
+                <span>{app.developer}</span>
+              </>
+            )}
+            {app.developer !== 'DevTreos team' && <span>{app.developer}</span>}
+            <span className="mx-2">•</span>
+            <span className="text-amber-500"><i className="fas fa-star"></i></span>
+            <span className="ml-1">{app.rating}</span>
+            <span className="mx-2">•</span>
+            <span>{app.category}</span>
+          </div>
+          {app.downloadUrl && (
+            <a
+              href={app.downloadUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-500 hover:text-blue-600 dark:hover:text-blue-400 mt-2 inline-block"
+            >
+              <i className="fas fa-download mr-1"></i> Download
+            </a>
+          )}
+        </div>
+      </motion.div>
+    );
+
+    const SettingsOption = ({ icon, title, action, isLast = false }) => (
+      <motion.div 
+        whileTap={{ scale: 0.98 }}
+        className={`settings-option flex items-center justify-between ${!isLast ? 'border-b' : ''}`}
+        onClick={action}
+      >
+        <div className="flex items-center">
+          <div className="w-8 text-center mr-3">
+            <i className={`fas ${icon} dark:text-white`}></i>
+          </div>
+          <span className="dark:text-white">{title}</span>
+        </div>
+        <i className="fas fa-chevron-right text-gray-400"></i>
+      </motion.div>
+    );
+
+    const OlaCodezStore = () => {
+      const [selectedIndex, setSelectedIndex] = useState(0);
+      const [searchQuery, setSearchQuery] = useState('');
+      const [isSearchExpanded, setIsSearchExpanded] = useState(false);
+      const [isDarkMode, setIsDarkMode] = useState(false);
+      const [allApps, setAllApps] = useState([]);
+      const [filteredApps, setFilteredApps] = useState([]);
+      const [isLoading, setIsLoading] = useState(false);
+      const [errorMessage, setErrorMessage] = useState('');
+      const [deferredPrompt, setDeferredPrompt] = useState(null);
+      const [showInstallPrompt, setShowInstallPrompt] = useState(false);
+      const [notificationPermission, setNotificationPermission] = useState('default');
+      const searchInputRef = useRef(null);
+
+      const GOOGLE_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwK2qgg-mKZOpbbBSfjtRAxMFOk6YSZsbqaoA-a3tsf5B6fm9J10Gdm8XIom39QA7r8/exec';
+
+      useEffect(() => {
+        // Set dark mode based on user preference or localStorage
+        const savedMode = localStorage.getItem('darkMode') === 'true';
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        setIsDarkMode(savedMode || prefersDark);
+        document.body.classList.toggle('dark', savedMode || prefersDark);
+
+        // Check notification permission
+        if ('Notification' in window) {
+          setNotificationPermission(Notification.permission);
+        }
+
+        // PWA install prompt
+        const handleBeforeInstallPrompt = (e) => {
+          e.preventDefault();
+          setDeferredPrompt(e);
+          setTimeout(() => {
+            setShowInstallPrompt(true);
+          }, 3000);
+        };
+        window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+        // Load cached apps or initialize
+        const loadCachedApps = async () => {
+          const cachedApps = localStorage.getItem('cached_apps');
+          if (cachedApps) {
+            try {
+              const apps = JSON.parse(cachedApps).map(AppItem.fromJson);
+              setAllApps(apps);
+              setFilteredApps(apps);
+            } catch {
+              initializeLocalApps();
+            }
+          } else {
+            initializeLocalApps();
+          }
+        };
+
+        loadCachedApps();
+        loadAppsFromDrive();
+
+        return () => {
+          window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+        };
+      }, []);
+
+      useEffect(() => {
+        if (isSearchExpanded && searchInputRef.current) {
+          searchInputRef.current.focus();
+        }
+      }, [isSearchExpanded]);
+
+      useEffect(() => {
+        filterApps(searchQuery);
+      }, [searchQuery, allApps]);
+
+      const initializeLocalApps = () => {
+        const localApps = sampleApps.map(AppItem.fromJson);
+        setAllApps(localApps);
+        setFilteredApps(localApps);
+        localStorage.setItem('cached_apps', JSON.stringify(sampleApps));
+      };
+
+      const loadAppsFromDrive = async () => {
+        setIsLoading(true);
+        setErrorMessage('');
+
+        try {
+          const response = await fetch(GOOGLE_APPS_SCRIPT_URL, { mode: 'cors' });
+          if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+          const jsonData = await response.json();
+          if (!jsonData.apps) throw new Error('Invalid response format');
+          const apps = jsonData.apps.map(AppItem.fromJson);
+          setAllApps(apps);
+          setFilteredApps(apps);
+          localStorage.setItem('cached_apps', JSON.stringify(jsonData.apps));
+        } catch (e) {
+          setErrorMessage('Failed to load apps. Using cached data.');
+          console.error('Error loading apps:', e);
+          if (!allApps.length) initializeLocalApps();
+        } finally {
+          setIsLoading(false);
+        }
+      };
+
+      const filterApps = (query) => {
+        if (!query) {
+          setFilteredApps(allApps);
+        } else {
+          const lowerQuery = query.toLowerCase();
+          setFilteredApps(
+            allApps.filter(
+              (app) =>
+                app.name.toLowerCase().includes(lowerQuery) ||
+                app.description.toLowerCase().includes(lowerQuery) ||
+                app.category.toLowerCase().includes(lowerQuery) ||
+                app.developer.toLowerCase().includes(lowerQuery)
+            )
+          );
+        }
+      };
+
+      const handleNavClick = (index) => {
+        setSelectedIndex(index);
+        setIsSearchExpanded(index === 1);
+        if (index === 1) {
+          setTimeout(() => searchInputRef.current?.focus(), 100);
+        } else {
+          setSearchQuery('');
+          searchInputRef.current?.blur();
+        }
+      };
+
+      const toggleDarkMode = () => {
+        const newMode = !isDarkMode;
+        setIsDarkMode(newMode);
+        document.body.classList.toggle('dark', newMode);
+        localStorage.setItem('darkMode', newMode);
+      };
+
+      const handleInstallClick = async () => {
+        if (deferredPrompt) {
+          deferredPrompt.prompt();
+          const { outcome } = await deferredPrompt.userChoice;
+          if (outcome === 'accepted') {
+            console.log('User accepted the install prompt');
+          }
+          setDeferredPrompt(null);
+          setShowInstallPrompt(false);
+        }
+      };
+
+      const requestNotificationPermission = () => {
+        if ('Notification' in window) {
+          Notification.requestPermission().then(permission => {
+            setNotificationPermission(permission);
+            if (permission === 'granted') {
+              sendNotification('Notifications enabled', 'You will now receive updates from OlaCodez Store');
+            }
+          });
+        }
+      };
+
+      const sendNotification = (title, body) => {
+        if ('Notification' in window && Notification.permission === 'granted') {
+          new Notification(title, {
+            body: body,
+            icon: 'favicon.ico'
+          });
+        }
+      };
+
+      const openWhatsApp = () => {
+        window.open(`https://wa.me/2349157456510`, '_blank');
+      };
+
+      const clearCache = () => {
+        localStorage.removeItem('cached_apps');
+        initializeLocalApps();
+        sendNotification('Cache cleared', 'App cache has been cleared');
+      };
+
+      const refreshApps = () => {
+        loadAppsFromDrive();
+      };
+
+      const SettingsPanel = () => (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="liquid-glass rounded-2xl p-6 max-w-2xl mx-auto"
+        >
+          <h2 className="text-2xl font-semibold dark:text-white mb-6 flex items-center">
+            <i className="fas fa-cog mr-3"></i> Settings
+          </h2>
+          
+          <div className="rounded-xl overflow-hidden">
+            <SettingsOption 
+              icon="fa-moon" 
+              title="Dark Mode" 
+              action={toggleDarkMode}
+            />
+            <SettingsOption 
+              icon="fa-bell" 
+              title="Notifications" 
+              action={requestNotificationPermission}
+            />
+            <SettingsOption 
+              icon="fa-sync" 
+              title="Refresh Apps" 
+              action={refreshApps}
+            />
+            <SettingsOption 
+              icon="fa-trash" 
+              title="Clear Cache" 
+              action={clearCache}
+            />
+            <SettingsOption 
+              icon="fa-whatsapp" 
+              title="Contact Us" 
+              action={openWhatsApp}
+              isLast={true}
+            />
+          </div>
+          
+          <div className="mt-8 text-center text-sm dark:text-gray-400">
+            <p>OlaCodez Store v1.0.0</p>
+            <p className="mt-2">© {new Date().getFullYear()} DevTreos Team</p>
+          </div>
+        </motion.div>
+      );
+
+      return (
+        <div className="relative min-h-screen pb-16">
+          <div className={`fixed inset-0 transition-colors duration-300 ${isDarkMode ? 'dark' : ''}`}>
+            <div className="gradient-bg absolute inset-0" />
+            <div className="container mx-auto p-4">
+              {selectedIndex !== 1 && selectedIndex !== 2 && (
+                <header className="flex justify-between items-center mb-8">
+                  <h1 className="text-2xl font-bold dark:text-white">
+                    <i className="fas fa-mobile-alt mr-2"></i> OlaCodez
+                  </h1>
+                  <div className="flex items-center space-x-4">
+                    <button 
+                      onClick={() => sendNotification('Test Notification', 'This is a test notification from OlaCodez Store')}
+                      className="text-lg dark:text-gray-300 hover:text-blue-500 dark:hover:text-blue-400"
+                      title="Test notification"
+                      disabled={notificationPermission !== 'granted'}
+                    >
+                      <i className="fas fa-bell"></i>
+                    </button>
+                  </div>
+                </header>
+              )}
+              
+              {showInstallPrompt && (
+                <motion.div
+                  initial={{ opacity: 0, y: -20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="liquid-glass rounded-lg p-4 mb-4 flex justify-between items-center"
+                >
+                  <div>
+                    <h3 className="font-bold dark:text-white">
+                      <i className="fas fa-download mr-2"></i> Install OlaCodez Store
+                    </h3>
+                    <p className="text-sm dark:text-gray-300">Get the app experience on your device</p>
+                  </div>
+                  <div className="flex space-x-2">
+                    <button 
+                      onClick={() => setShowInstallPrompt(false)}
+                      className="px-3 py-1 rounded-lg bg-gray-200 dark:bg-gray-700 dark:text-white"
+                    >
+                      Later
+                    </button>
+                    <button 
+                      onClick={handleInstallClick}
+                      className="px-3 py-1 rounded-lg bg-blue-500 text-white"
+                    >
+                      Install
+                    </button>
+                  </div>
+                </motion.div>
+              )}
+              
+              {selectedIndex === 0 && (
+                <motion.div
+                  animate={{ y: isSearchExpanded ? 20 : 0, scale: isSearchExpanded ? 0.95 : 1 }}
+                  className="liquid-glass rounded-2xl p-6 max-w-2xl mx-auto"
+                >
+                  {!isSearchExpanded && (
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="text-center mb-6"
+                    >
+                      <div className="text-4xl mb-4">
+                        <i className="fas fa-search"></i>
+                      </div>
+                      <h2 className="text-2xl font-semibold dark:text-white mt-4">Search Apps</h2>
+                      <p className="text-gray-600 dark:text-gray-400">
+                        Find the perfect app for your needs
+                      </p>
+                    </motion.div>
+                  )}
+                  <div className="relative">
+                    <input
+                      ref={searchInputRef}
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      onFocus={() => handleNavClick(1)}
+                      placeholder="Search for apps..."
+                      className="w-full p-3 rounded-lg liquid-glass text-black dark:text-white focus:outline-none"
+                    />
+                    <div className="absolute right-3 top-3 text-gray-500">
+                      <i className="fas fa-search"></i>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+
+              {selectedIndex === 1 && (
+  <div className="mt-4">
+    {/* Added search bar for Discover screen */}
+    <div className="liquid-glass rounded-lg p-3 mb-4">
+      <div className="relative">
+        <input
+          ref={searchInputRef}
+          type="text"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="Search for apps..."
+          className="w-full p-3 rounded-lg liquid-glass text-black dark:text-white focus:outline-none"
+        />
+        <div className="absolute right-3 top-3 text-gray-500">
+          <i className="fas fa-search"></i>
+        </div>
+      </div>
+    </div>
+
+    {isLoading ? (
+      <div className="flex justify-center py-8">
+        <div className="animate-spin h-8 w-8 border-4 border-blue-500 border-t-transparent rounded-full"></div>
+      </div>
+    ) : errorMessage ? (
+      <div className="text-center py-8">
+        <p className="dark:text-white">{errorMessage}</p>
+        <button
+          onClick={loadAppsFromDrive}
+          className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+        >
+          <i className="fas fa-sync-alt mr-2"></i> Retry
+        </button>
+      </div>
+    ) : filteredApps.length === 0 ? (
+      <div className="text-center py-8">
+        <div className="text-4xl mb-4 text-gray-400">
+          <i className="fas fa-exclamation-circle"></i>
+        </div>
+        <p className="dark:text-gray-400">
+          {searchQuery ? `No apps found for "${searchQuery}"` : 'No apps available'}
+        </p>
+      </div>
+    ) : (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="max-h-[60vh] overflow-y-auto"
+      >
+        <AnimatePresence>
+          {filteredApps.map((app) => (
+            <AppCard key={app.id} app={app} />
+          ))}
+        </AnimatePresence>
+      </motion.div>
+    )}
+  </div>
+)}
+
+              {selectedIndex === 2 && <SettingsPanel />}
+            </div>
+            <nav className="fixed bottom-0 left-0 right-0">
+              <div className="liquid-glass rounded-t-2xl p-4 flex justify-around items-center">
+                <button
+                  onClick={() => handleNavClick(0)}
+                  className={`flex flex-col items-center ${selectedIndex === 0 ? 'text-blue-500 dark:text-blue-400' : 'text-gray-600 dark:text-gray-400'}`}
+                >
+                  <i className="fas fa-home text-xl"></i>
+                  <span className="text-xs mt-1">Home</span>
+                </button>
+                <button
+                  onClick={() => handleNavClick(1)}
+                  className={`flex flex-col items-center ${selectedIndex === 1 ? 'text-blue-500 dark:text-blue-400' : 'text-gray-600 dark:text-gray-400'}`}
+                >
+                  <i className="fas fa-compass text-xl"></i>
+                  <span className="text-xs mt-1">Discover</span>
+                </button>
+                <button
+                  onClick={() => handleNavClick(2)}
+                  className={`flex flex-col items-center ${selectedIndex === 2 ? 'text-blue-500 dark:text-blue-400' : 'text-gray-600 dark:text-gray-400'}`}
+                >
+                  <i className="fas fa-cog text-xl"></i>
+                  <span className="text-xs mt-1">Settings</span>
+                </button>
+              </div>
+            </nav>
+          </div>
+        </div>
+      );
+    };
+
+    ReactDOM.render(<OlaCodezStore />, document.getElementById('root'));
+  </script>
+
+  <script>
+    // Service Worker Registration
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').then(
+          (registration) => console.log('Service Worker registered:', registration.scope),
+          (err) => console.error('Service Worker registration failed:', err)
+        );
+      });
+    }
+  </script>
+</body>
+</html>
